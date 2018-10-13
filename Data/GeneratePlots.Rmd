@@ -1,0 +1,212 @@
+---
+title: "Study on UML Use and Effectiveness in California Software Industry"
+author: "Jacob Nogle"
+output:
+  html_document: default
+  html_notebook: default
+---
+## Load Data
+```{r}
+orig_resp <- read.csv("Final Responses (Original) - Form Responses 1.csv")
+copy_resp <- read.csv("Final Responses (Copy) - Form Responses 1.csv")
+full_resp <- rbind(orig_resp, copy_resp)
+full_resp$Domain <- strsplit(array(full_resp$Domain), split = ", ")
+full_resp$Roles <- strsplit(array(full_resp$Roles), split = ", ")
+full_resp$BenefitsCode <- strsplit(array(full_resp$BenefitsCode), split = ", ")
+full_resp$DrawbacksCode <- strsplit(array(full_resp$DrawbacksCode), split = ", ")
+full_resp$ActivitiesCode <- strsplit(array(full_resp$ActivitiesCode), split = ", ")
+full_resp$CECode <- strsplit(array(full_resp$CECode), split = ", ")
+full_resp$EduCode <- strsplit(array(full_resp$EduCode), split = ", ")
+full_resp$Age <- factor(full_resp$Age, levels = c("18 - 24", "25 - 29", "30 - 34", "35 - 39", "40 - 49", "50 - 59", "60 +"))
+full_resp$WorkExperience <- factor(full_resp$WorkExperience, levels = c("Less than 1 year", "1 - 3 years", "3 - 5 years", "5 - 7 years", "7 - 10 years", "10+ years"))
+full_resp$Education <- factor(full_resp$Education, levels = c("High School Diploma", "Associate Degree", "Bachelor's Degree", "Master's Degree"))
+library("ggplot2")
+library("scales")
+library("reshape2")
+```
+
+##Gender
+```{r}
+full_resp <- within(full_resp, Gender <- factor(Gender, levels=names(sort(table(Gender), decreasing = TRUE))))
+ggplot(full_resp, aes(x=Gender)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black") + labs(y = "Count", x="") + theme(axis.text=element_text(size =12))
+```
+
+##Age
+```{r}
+full_resp <- within(full_resp, Age <- factor(Age, levels=names(sort(table(Age), decreasing = TRUE))))
+ggplot(full_resp, aes(x=Age)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black") + labs(y = "Count", x="") + theme(axis.text=element_text(size =12))
+```
+
+##Work Experience
+```{r}
+full_resp <- within(full_resp, WorkExperience <- factor(WorkExperience, levels=names(sort(table(WorkExperience), decreasing = TRUE))))
+ggplot(full_resp, aes(x=WorkExperience)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black") + labs(y = "Count", x="") + theme(axis.text=element_text(size =12))
+```
+
+##Education
+```{r}
+full_resp <- within(full_resp, Education <- factor(Education, levels=names(sort(table(Education), decreasing = TRUE))))
+ggplot(full_resp, aes(x=Education)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black") + labs(y = "Count", x="" ) + theme(axis.text=element_text(size =12))
+```
+
+##Domain
+```{r}
+dom_arr <- c()
+for(r in full_resp$Domain) {
+  for(d in r) {
+    dom_arr <- c(dom_arr, d)
+  }
+}
+
+dom_factors <- as.factor(dom_arr)
+dom_factors_df <- data.frame(dom_factors)
+
+dom_factors_df <- within(dom_factors_df, dom_factors <- factor(dom_factors, levels=names(sort(table(dom_factors), decreasing = TRUE))))
+ggplot(dom_factors_df, aes(x=dom_factors)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black")  + theme(axis.text.x=element_text(angle=60,hjust=1,size =11), axis.text.y =  element_text(size=11)) + labs(x = "", y = "Count")
+```
+##UML Frequency by Domain
+```{r}
+dom_freq <- list()
+for(i in 1:length(full_resp$Domain)) {
+  for(d in full_resp$Domain[i]) {
+    dom_freq[[i]] <- c(d, as.character(full_resp$UMLUse[i]))
+  }
+}
+
+final_domain_vs_uml_use = list()
+p <- 1
+for(j in 1:length(dom_freq)) {
+  for(k in 1:length(dom_freq[[j]])) {
+    if(k != length(dom_freq[[j]])) {
+      final_domain_vs_uml_use[[p]] <- c(dom=dom_freq[[j]][k], freq=dom_freq[[j]][length(dom_freq[[j]])])
+      p <- p+1
+    }
+  }
+}
+
+dom_freq_df <- t(as.data.frame(final_domain_vs_uml_use))
+row.names(dom_freq_df) <- NULL
+dom_freq_df <- as.data.frame(dom_freq_df)
+
+dom_freq_df <- within(dom_freq_df, freq <- factor(freq, levels=names(sort(table(freq), decreasing = TRUE))))
+
+ggplot(dom_freq_df, aes(freq)) + geom_bar(fill="darkgreen") + facet_wrap(~ dom) + theme(axis.text.x = element_text(angle=90,hjust=1,size=10), axis.text.y =  element_text(size=8)) + labs(x = "")
+```
+
+## General UML Use
+```{r}
+full_resp <- within(full_resp, UMLUse <- factor(UMLUse, levels=names(sort(table(UMLUse), decreasing = TRUE))))
+ggplot(full_resp, aes(x=UMLUse)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black") + labs(y = "Count", x="") + theme(axis.text.x=element_text(size =12), axis.text.y =  element_text(size=12))
+```
+
+##Structural UML Use
+```{r}
+struct_resp <- melt(full_resp, measure.vars = c("Structural.Class.Diagram.", "Structural.Package.Diagram.", "Structural.Object.Diagram.", "Structural.Component.Diagram.", "Structural.Composite.Structure.Diagram.", "Structural.Deployment.Diagram."), value.name = "StructFreq", variable.name = "StructDiagram")
+
+struct_resp$StructFreq <- as.factor(struct_resp$StructFreq)
+struct_resp$StructFreq <- factor(struct_resp$StructFreq, levels = c("Never", "Rarely", "Sometimes", "Often", "Usually", "Always"))
+
+ggplot(struct_resp, aes(StructDiagram, fill=StructFreq)) + geom_bar(position = "dodge")  + labs(y = "Count", x="") + theme(axis.text.x = element_text(angle=45,hjust=1,size=12), axis.text.y =  element_text(size=12)) + scale_x_discrete(breaks=c("Structural.Class.Diagram.","Structural.Package.Diagram.","Structural.Object.Diagram.", "Structural.Component.Diagram.", "Structural.Composite.Structure.Diagram.", "Structural.Deployment.Diagram."),
+        labels=c("Class Diagram", "Package Diagram", "Object Diagram", "Component Diagram", "Composite Structure Diagram", "Deployment Diagram"))
+
+```
+
+##Behavioral UML Use
+```{r}
+behav_resp <- melt(full_resp, measure.vars = c("Behavioral.Activity.Diagram.", "Behavioral.Sequence.Diagram.", "Behavioral.Use.Case.Diagram.", "Behavioral.State.Diagram.", "Behavioral.Communication.Diagram.", "Behavioral.Interaction.Overview.Diagram.", "Behavioral.Timing.Diagram."), value.name = "BehavFreq", variable.name = "BehavDiagram")
+
+behav_resp$BehavFreq <- as.factor(behav_resp$BehavFreq)
+behav_resp$BehavFreq <- factor(behav_resp$BehavFreq, levels = c("Never", "Rarely", "Sometimes", "Often", "Usually", "Always"))
+
+ggplot(behav_resp, aes(BehavDiagram, fill=BehavFreq)) + geom_bar(position = "dodge")  + labs(y = "Count", x="") + theme(axis.text.x = element_text(angle=45,hjust=1,size=12), axis.text.y =  element_text(size=12)) + scale_x_discrete(breaks=c("Behavioral.Activity.Diagram.", "Behavioral.Sequence.Diagram.", "Behavioral.Use.Case.Diagram.", "Behavioral.State.Diagram.", "Behavioral.Communication.Diagram.", "Behavioral.Interaction.Overview.Diagram.", "Behavioral.Timing.Diagram."),
+        labels=c("Activity Diagram", "Sequence Diagram", "Use Case Diagram", "State Diagram", "Communication Diagram", "Interaction Overview Diagram", "Timing Diagram"))
+```
+
+##UML Benefits
+```{r}
+ben_arr <- c()
+for(r in full_resp$BenefitsCode) {
+  for(d in r) {
+    ben_arr <- c(ben_arr, trimws(d))
+  }
+}
+
+ben_factors <- as.factor(ben_arr)
+ben_factors_df <- data.frame(ben_factors)
+
+ben_factors_df <- within(ben_factors_df, ben_factors <- factor(ben_factors, levels=names(sort(table(ben_factors), decreasing = TRUE))))
+ggplot(ben_factors_df, aes(x=ben_factors)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black")  + theme(axis.text.x = element_text(angle=55,hjust=1,size=10), axis.text.y =  element_text(size=10))+ labs(x = "", y = "")
+```
+
+##UML Drawbacks
+```{r}
+drawb_arr <- c()
+for(r in full_resp$DrawbacksCode) {
+  for(d in r) {
+    drawb_arr <- c(drawb_arr, trimws(d))
+  }
+}
+
+drawb_factors <- as.factor(drawb_arr)
+drawb_factors_df <- data.frame(drawb_factors)
+
+drawb_factors_df <- within(drawb_factors_df, drawb_factors <- factor(drawb_factors, levels=names(sort(table(drawb_factors), decreasing = TRUE))))
+ggplot(drawb_factors_df, aes(x=drawb_factors)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black")  + theme(axis.text.x = element_text(angle=45,hjust=1,size=12), axis.text.y =  element_text(size=12)) + labs(x = "", y = "Count")
+```
+
+##UML Common Activities
+```{r}
+act_arr <- c()
+for(r in full_resp$ActivitiesCode) {
+  for(d in r) {
+    act_arr <- c(act_arr, trimws(d))
+  }
+}
+
+act_factors <- as.factor(act_arr)
+act_factors_df <- data.frame(act_factors)
+
+act_factors_df <- within(act_factors_df, act_factors <- factor(act_factors, levels=names(sort(table(act_factors), decreasing = TRUE))))
+ggplot(act_factors_df, aes(x=act_factors)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black")  + theme(axis.text.x = element_text(angle=45,hjust=1,size=12), axis.text.y =  element_text(size=12)) + labs(x = "", y = "Count")
+```
+
+##Likert-Scale Benefits
+```{r}
+library(likert)
+# Convert to factors
+likert_resp <- full_resp[, 46:49]
+colnames(likert_resp) <- c("Reduces Effort In Writing/Debugging Code", "Increases Productivity", "Increases Quality of Delivered Software", "Increases Communication Effectiveness")
+likert_resp$`Reduces Effort In Writing/Debugging Code` <- as.factor(likert_resp$`Reduces Effort In Writing/Debugging Code`)
+likert_resp$`Increases Productivity` <- as.factor(likert_resp$`Increases Productivity`)
+likert_resp$`Increases Quality of Delivered Software` <- as.factor((likert_resp$`Increases Quality of Delivered Software`))
+likert_resp$`Increases Communication Effectiveness` <- as.factor(likert_resp$`Increases Communication Effectiveness`)
+
+# Add levels
+likert_resp$`Increases Productivity` <- factor(likert_resp$`Increases Productivity`, levels = 0:5)
+likert_resp$`Increases Quality of Delivered Software` <- factor(likert_resp$`Increases Quality of Delivered Software`, levels = 0:5)
+likert_resp$`Increases Communication Effectiveness` <- factor(likert_resp$`Increases Communication Effectiveness`, levels = 0:5)
+likert_resp$`Increases Communication Effectiveness` <- factor(likert_resp$`Increases Communication Effectiveness`, levels = 0:5) 
+
+likert.bar.plot(likert(likert_resp), low.color = "gold", high.color="darkgreen", legend="Perceived Benefits Of UML") + theme(axis.text =  element_text(size=12))
+```
+
+```{r}
+ggplot(full_resp, aes(x=ShouldWeEducate)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black") + labs(y = "Count", x="Should We Educate Students on UML Use?")
+```
+
+##UML Education Suggestions
+```{r}
+edu_arr <- c()
+for(r in full_resp$EduCode) {
+  for(d in r) {
+    edu_arr <- c(edu_arr, trimws(d))
+  }
+}
+
+edu_factors <- as.factor(edu_arr)
+edu_factors_df <- data.frame(edu_factors)
+
+edu_factors_df <- within(edu_factors_df, edu_factors <- factor(edu_factors, levels=names(sort(table(edu_factors), decreasing = TRUE))))
+ggplot(edu_factors_df, aes(x=edu_factors)) + geom_bar(aes(y = (..count..)), fill="darkgreen") + geom_text(aes(y = (..count..) + .5,label =   ifelse((..count..)==0,"",scales::percent((..count..)/sum(..count..)))), stat="count",colour="black")  + theme(axis.text.x = element_text(angle=65,hjust=1,size=11), axis.text.y =  element_text(size=11)) + labs(x = "", y = "Count")
+```
+
